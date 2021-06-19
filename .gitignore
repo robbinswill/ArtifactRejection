@@ -8,6 +8,9 @@
 # Subject data
 data/*
 
+# DotEnv configuration
+.env
+
 # User-specific stuff
 .idea/*
 .idea/**/workspace.xml

@@ -1,0 +1,15 @@
+#conifg.yaml for hyperparameters
+
+PARAMS:
+  TMIN: -0.2
+  TMAX: 1.0
+  EOG_INDS: [64, 65]
+  L_FREQ: 0.1
+  H_FREQ: 30.0
+  L_TRANS_BANDWIDTH: 'auto'
+  H_TRANS_BANDWIDTH: 'auto'
+  FILTER_LENGTH: 'auto'
+  ICA_RANDOM_STATE: 42
+  N_COMPONENTS: 0.975
+  BASELINE: (None, 0)
+  MONTAGE_FNAME: 'standard_1005'
