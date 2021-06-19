@@ -12,6 +12,7 @@ load_dotenv(dotenv_path)
 
 # Retrieve path to raw EEG data
 PATH_DATA_RAW = Path(os.getenv("PATH_DATA_RAW"))
+PATH_DATA_NAMES = Path(os.getenv("PATH_DATA_NAMES"))
 
 # Declare hyperparameters
 # More specific parameters for other experiments can be declared in separate YAML files
@@ -31,3 +32,10 @@ __C.PARAMS.ICA_RANDOM_STATE = 42
 __C.PARAMS.N_COMPONENTS = 0.975
 __C.PARAMS.BASELINE = (None, 0)
 __C.PARAMS.MONTAGE_FNAME = 'standard_1005'
+
+
+def get_cfg_defaults():
+    """
+    Get a YACS CfgNode object with default values
+    """
+    return __C.clone()
