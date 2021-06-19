@@ -6,7 +6,7 @@ from src.config import config
 from src.dataloader import subject
 
 
-def read_in():
+def _read_in():
     """
     Read-in the list of subjects from the CSV in the data folder
     :return: a list of subject names
@@ -17,9 +17,9 @@ def read_in():
 def generate_subjects():
     """
     Generate a Subject object for each read-in subject
-    :return: a dict of Subjects in the form { Subject name: Subject object}
+    :return: a dict of Subject objects in the form { Subject name: Subject object}
     """
-    names = read_in()
+    names = _read_in()
     subjects = {}
     for n in names:
         subjects[n] = subject.Subject(n)

@@ -1,8 +1,6 @@
 import sys
 sys.path.append('../src')
 
-from src.config import config
-
 
 class Subject:
     """

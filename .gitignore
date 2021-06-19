@@ -11,6 +11,9 @@ data/*
 # DotEnv configuration
 .env
 
+# __pycache__
+**/__pycache__
+
 # User-specific stuff
 .idea/*
 .idea/**/workspace.xml
