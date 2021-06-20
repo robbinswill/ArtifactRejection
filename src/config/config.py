@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import mne
 
 from dotenv import find_dotenv, load_dotenv
 from yacs.config import CfgNode as ConfigurationNode
@@ -21,6 +22,7 @@ __C = ConfigurationNode()
 cfg = __C
 
 __C.DESCRIPTION = 'Default config for subject preprocessing'
+
 __C.PARAMS = ConfigurationNode()
 __C.PARAMS.TMIN = -0.2
 __C.PARAMS.TMAX = 1.0
@@ -34,6 +36,28 @@ __C.PARAMS.ICA_RANDOM_STATE = 42
 __C.PARAMS.N_COMPONENTS = 0.975
 __C.PARAMS.BASELINE = (None, 0)
 __C.PARAMS.MONTAGE_FNAME = 'standard_1005'
+
+__C.EXPERIMENT = ConfigurationNode()
+__C.EXPERIMENT.EVENT_ID = {'Quiet/Control/Correct': 1, 'Quiet/Violation/Correct': 2,
+                           'Noise/Control/Correct': 3, 'Noise/Violation/Correct': 4,
+                           'VisualCue': 5,
+
+                           'Quiet/Control/Error': 11, 'Quiet/Violation/Error': 22,
+                           'Noise/Control/Error': 33, 'Noise/Violation/Error': 44,
+
+                           'Quiet/Control/Practice': 100, 'Quiet/Violation/Practice': 200,
+                           'Noise/Control/Practice': 300, 'Noise/Violation/Practice': 400,
+                           }
+__C.EXPERIMENT.COND_OF_INTEREST = sorted(__C.EXPERIMENT.EVENT_ID.values())
+__C.EXPERIMENT.CODES_A1L2 = [2, 1, 2, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2, 1, 2, 1, 2, 1, 1, 2, 1, 1, 2, 2, 1, 1, 1, 2, 1,
+                             2, 1, 2, 2, 1, 1, 2, 2, 2, 1, 2, 1, 1, 1, 2, 2, 1, 1, 2, 1, 2, 2, 2, 2, 1, 1, 2, 1, 1, 2,
+                             2, 2, 1, 2, 2, 1, 2, 1, 1, 2, 1, 2, 1, 2, 1, 1, 1, 2, 1, 2, 2, 2, 1, 1, 2, 1, 1, 2]
+__C.EXPERIMENT.CODES_A2L2 = [4, 3, 4, 3, 3, 4, 4, 4, 3, 3, 3, 4, 4, 4, 3, 4, 3, 4, 3, 3, 4, 3, 3, 4, 4, 3, 3, 3, 4, 3,
+                             4, 3, 4, 4, 3, 3, 4, 4, 4, 3, 4, 3, 3, 3, 4, 4, 3, 3, 4, 3, 4, 4, 4, 4, 3, 3, 4, 3, 3, 4,
+                             4, 4, 3, 4, 4, 3, 4, 3, 3, 4, 3, 4, 3, 4, 3, 3, 3, 4, 3, 4, 4, 4, 3, 3, 4, 3, 3, 4]
+__C.EXPERIMENT.EXPT_CONTRASTS = {'Quiet_Viol-Ctrl': ['Quiet/Violation/Correct', 'Quiet/Control/Correct'],
+                                 'Noise_Viol-Ctrl': ['Noise/Violation/Correct', 'Noise/Control/Correct'],
+                                 }
 
 
 def get_cfg_defaults():
@@ -49,4 +73,4 @@ def get_subject_names():
     :return: a list of subjects from the subject-names.csv (column is "Subjects")
     """
     df = pd.read_csv(Path(os.getenv("PATH_DATA_NAMES")))
-    return list(df.Subjects)
+    return list(df.Subjects)  # Is it okay to use the column name here?
