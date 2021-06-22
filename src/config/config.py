@@ -74,3 +74,6 @@ def get_subject_names():
     """
     df = pd.read_csv(Path(os.getenv("PATH_DATA_NAMES")))
     return list(df.Subjects)  # Is it okay to use the column name here?
+
+
+
