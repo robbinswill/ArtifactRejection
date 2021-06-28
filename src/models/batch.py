@@ -7,33 +7,22 @@ from src.models import subject
 class SubjectBatch:
 
     def __init__(self):
-        self.batch = {}
-        self.data = None
+        self.subject_data = None
+        self.batch = None
 
     def get_data(self):
-        return self.data
+        return self.subject_data
 
     def get_batch(self):
         return self.batch
 
     def load_subject_data(self):
-        self.data = subjectdata.SubjectData()
+        self.subject_data = subjectdata.SubjectData()
 
     def generate_subjects(self):
-        # Get list of subjects
-        subject_names = self.data.get_subject_names()
-        # Get subject lists
-        subject_lists = self.data.get_subject_lists()
-        # Get subject paths
-        subject_paths = self.data.get_subject_paths()
-        # Generate subject objects and store in a dict
-        for s in subject_names:
-            list1 = subject_lists[s][0]
-            list2 = subject_lists[s][1]
-            path1 = subject_paths[s][0]
-            path2 = subject_paths[s][1]
-            events_fname = subject_paths[s][2]
-            self.batch[s] = subject.Subject(s, path1, path2, list1, list2)
+        self.batch = {}
+        for sub, paths in self.subject_data.EEG_paths.items():
+            self.batch[sub] = subject.Subject(sub, paths)
 
     def subject_read_EEG(self):
         for name, sub in self.batch.items():
@@ -46,3 +35,7 @@ class SubjectBatch:
     def subject_event_processing(self):
         for name, sub in self.batch.items():
             sub.process_events()
+
+    def subject_behavioural_log(self):
+        for name, sub in self.batch.items():
+            sub.read_behavioural_log()

@@ -16,8 +16,51 @@ dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
 
 # Retrieve path to raw EEG data
-PATH_DATA_RAW = Path(os.getenv("PATH_DATA_RAW"))
-PATH_DATA_INTERIM = Path(os.getenv("PATH_DATA_INTERIM"))
+PATH_DATA = Path(os.getenv("PATH_DATA"))
+PATH_DATA_RAW = PATH_DATA.joinpath('raw')
+PATH_DATA_INTERIM = PATH_DATA.joinpath('interim')
+
+
+def get_data_path():
+    return PATH_DATA
+
+
+def get_raw_path():
+    return PATH_DATA_RAW
+
+
+def get_lists_path(name):
+    return PATH_DATA_RAW.joinpath(name, 'EEG', 'SPIN')
+
+
+class FileExtensions:
+    def __init__(self, subject_name, list1, list2):
+        self.subject_name = subject_name
+        self.list1 = list1
+        self.list2 = list2
+        self.path1 = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG', 'SPIN', self.list1,
+                                            self.subject_name + '_SPIN_' + self.list1.lower() + '.set')
+        self.path2 = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG', 'SPIN', self.list2,
+                                            self.subject_name + '_SPIN_' + self.list2.lower() + '.set')
+        self.csv1 = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG', 'SPIN', self.list1,
+                                           self.subject_name + "_" + self.list1.lower() + '.csv')
+        self.csv2 = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG', 'SPIN', self.list2,
+                                           self.subject_name + "_" + self.list2.lower() + '.csv')
+        self.events_fname = PATH_DATA_INTERIM.joinpath(self.subject_name, 'EEG', 'SPIN',
+                                                       self.subject_name + '-eve.fif')
+        self.epochs_fname = PATH_DATA_INTERIM.joinpath(self.subject_name, 'EEG', 'SPIN',
+                                                       self.subject_name + '-epo.fif')
+        self.evoked_fname = PATH_DATA_INTERIM.joinpath(self.subject_name, 'EEG', 'SPIN',
+                                                       self.subject_name + '-ave.fif')
+        self.covariance_fname = PATH_DATA_INTERIM.joinpath(self.subject_name, 'EEG', 'SPIN',
+                                                           self.subject_name + '-cov.fif')
+        self.trans_fname = PATH_DATA_INTERIM.joinpath(self.subject_name, 'EEG', 'SPIN',
+                                                      self.subject_name + '-trans.fif')
+        self.forward_fname = PATH_DATA_INTERIM.joinpath(self.subject_name, 'EEG', 'SPIN',
+                                                        self.subject_name + '-fwd.fif')
+        self.inverse_fname = PATH_DATA_INTERIM.joinpath(self.subject_name, 'EEG', 'SPIN',
+                                                        self.subject_name + '-inv.fif')
+
 
 # Declare hyperparameters
 # More specific parameters for other experiments can be declared in separate YAML files
@@ -72,6 +115,12 @@ __C.EXPERIMENT.EXPT_CONTRASTS = ['Quiet_Viol-Ctrl - Quiet/Violation/Correct', 'Q
                                  'Noise_Viol-Ctrl - Noise/Violation/Correct', 'Noise_Viol-Ctrl - Noise/Control/Correct']
 
 
+def get_file_extensions():
+    return {'events_fname': '-eve.fif', 'epochs_fname': '-epo.fif', 'evoked_fname': '-ave.fif',
+            'covariance_fname': '-cov.fif', 'trans_fname': '-trans.fif', 'forward_fname': '-fwd.fif',
+            'inverse_fname': '-inv.fif'}
+
+
 def get_channel_mapping():
     return {'Fp1': 'Fp1', 'Fpz': 'Fp2', 'Fp2': 'F7', 'F7': 'F3', 'F3': 'Fz', 'Fz': 'F4', 'F4': 'F8',
             'F8': 'FC5', 'FC5': 'FC1', 'FC1': 'FC2', 'FC2': 'FC6', 'FC6': 'T7', 'M1': 'C3', 'T7': 'Cz',
@@ -84,20 +133,6 @@ def get_channel_mapping():
             'PO4': 'P1', 'PO6': 'P2', 'FT7': 'P6', 'FT8': 'PO7', 'TP7': 'PO3', 'TP8': 'POz', 'PO7': 'PO4',
             'PO8': 'PO8', 'HEOG': 'HEOG', 'VEOG': 'VEOG',
             }
-
-
-def get_raw_path():
-    """
-    :return: The raw directory path as a resolved path
-    """
-    return PATH_DATA_RAW
-
-
-def get_interim_path():
-    """
-    :return: The interim directory path as a resolved path
-    """
-    return PATH_DATA_INTERIM
 
 
 def get_cfg_defaults():

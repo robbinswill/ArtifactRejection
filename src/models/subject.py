@@ -10,24 +10,29 @@ class Subject:
     """
     Subject class for reading EEG data and performing pre-processing
     """
-
-    def __init__(self, name, path1, path2, events_fname, list1, list2):
+    def __init__(self, name, paths):
         self.MNE_Raw = None
         self.MNE_Raw_filt = None
         self.raw_files = []
         self.events = None
         self.event_dict = None
         self.name = name
-        self.list1 = list1
-        self.list2 = list2
-        self.paths = [path1, path2]
-        self.events_fname = events_fname
+        self.list1 = paths.list1
+        self.list2 = paths.list2
+        self.raw_paths = [paths.path1, paths.path2]
+        self.events_fname = paths.events_fname
+        self.epochs_fname = paths.epochs_fname
+        self.evoked_fname = paths.evoked_fname
+        self.covariance_fname = paths.covariance_fname
+        self.trans_fname = paths.trans_fname
+        self.forward_fname = paths.forward_fname
+        self.inverse_fname = paths.inverse_fname
 
     def read_MNE_raw(self):
         cfg = get_cfg_defaults()
         eog_inds = cfg['PARAMS']['EOG_INDS']
         self.raw_files = [mne.io.read_raw_eeglab(f, eog=eog_inds, preload=False)
-                          for f in self.paths]
+                          for f in self.raw_paths]
         self.MNE_Raw = mne.concatenate_raws(self.raw_files, preload=True)
 
         # Check for incorrect channels
@@ -67,3 +72,6 @@ class Subject:
             self.events[codes2replace_idx, 2] = cfg['EXPERIMENT']['CODES_A2L2']
 
         mne.write_events(self.events_fname, self.events)
+
+    def read_behavioural_log(self):
+        pass

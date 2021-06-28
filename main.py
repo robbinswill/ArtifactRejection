@@ -8,6 +8,7 @@ def run():
     test.subject_read_EEG()
     test.subject_bandpass_raw()
     test.subject_event_processing()
+    test.subject_behavioural_log()
     print('test')
 
 
