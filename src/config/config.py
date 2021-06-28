@@ -9,7 +9,6 @@ from pathlib import Path
 import os
 import pandas as pd
 
-
 # find .env automagically by walking up directories until it's found
 dotenv_path = find_dotenv()
 
@@ -18,8 +17,6 @@ load_dotenv(dotenv_path)
 
 # Retrieve path to raw EEG data
 PATH_DATA_RAW = Path(os.getenv("PATH_DATA_RAW"))
-
-
 
 # Declare hyperparameters
 # More specific parameters for other experiments can be declared in separate YAML files
@@ -70,6 +67,20 @@ __C.EXPERIMENT.CODES_A2L2 = [4, 3, 4, 3, 3, 4, 4, 4, 3, 3, 3, 4, 4, 4, 3, 4, 3, 
                              4, 4, 3, 4, 4, 3, 4, 3, 3, 4, 3, 4, 3, 4, 3, 3, 3, 4, 3, 4, 4, 4, 3, 3, 4, 3, 3, 4]
 __C.EXPERIMENT.EXPT_CONTRASTS = ['Quiet_Viol-Ctrl - Quiet/Violation/Correct', 'Quiet_Viol-Ctrl - Quiet/Control/Correct',
                                  'Noise_Viol-Ctrl - Noise/Violation/Correct', 'Noise_Viol-Ctrl - Noise/Control/Correct']
+
+
+def get_channel_mapping():
+    return {'Fp1': 'Fp1', 'Fpz': 'Fp2', 'Fp2': 'F7', 'F7': 'F3', 'F3': 'Fz', 'Fz': 'F4', 'F4': 'F8',
+            'F8': 'FC5', 'FC5': 'FC1', 'FC1': 'FC2', 'FC2': 'FC6', 'FC6': 'T7', 'M1': 'C3', 'T7': 'Cz',
+            'C3': 'C4', 'Cz': 'T8', 'C4': 'TP9', 'T8': 'CP5', 'M2': 'CP1', 'CP5': 'CP2', 'CP1': 'CP6',
+            'CP2': 'TP10', 'CP6': 'P7', 'P7': 'P3', 'P3': 'Pz', 'Pz': 'P4', 'P4': 'P8', 'P8': 'PO9',
+            'POz': 'O1', 'O1': 'Oz', 'Oz': 'O2', 'O2': 'PO10', 'AF7': 'AF7', 'AF3': 'AF3', 'AF4': 'AF4',
+            'AF8': 'AF8', 'F5': 'F5', 'F1': 'F1', 'F2': 'F2', 'F6': 'F6', 'FC3': 'FT9', 'FCz': 'FT7',
+            'FC4': 'FC3', 'C5': 'FC4', 'C1': 'FT8', 'C2': 'FT10', 'C6': 'C5', 'CP3': 'C1', 'CPz': 'C2',
+            'CP4': 'C6', 'P5': 'TP7', 'P1': 'CP3', 'P2': 'CPz', 'P6': 'CP4', 'PO5': 'TP8', 'PO3': 'P5',
+            'PO4': 'P1', 'PO6': 'P2', 'FT7': 'P6', 'FT8': 'PO7', 'TP7': 'PO3', 'TP8': 'POz', 'PO7': 'PO4',
+            'PO8': 'PO8', 'HEOG': 'HEOG', 'VEOG': 'VEOG',
+            }
 
 
 def get_raw_path():

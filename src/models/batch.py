@@ -29,3 +29,8 @@ def generate_subjects():
         path2 = subject_paths[s][1]
         subject_dict[s] = subject.Subject(s, path1, path2, list1, list2)
     return subject_dict
+
+
+def subject_read_EEG(subject_dict):
+    for name, sub in subject_dict.items():
+        sub.read_MNE_raw()
