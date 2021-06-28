@@ -10,12 +10,6 @@ class SubjectBatch:
         self.subject_data = None
         self.batch = None
 
-    def get_data(self):
-        return self.subject_data
-
-    def get_batch(self):
-        return self.batch
-
     def load_subject_data(self):
         self.subject_data = subjectdata.SubjectData()
 

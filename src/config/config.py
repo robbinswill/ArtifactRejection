@@ -115,12 +115,6 @@ __C.EXPERIMENT.EXPT_CONTRASTS = ['Quiet_Viol-Ctrl - Quiet/Violation/Correct', 'Q
                                  'Noise_Viol-Ctrl - Noise/Violation/Correct', 'Noise_Viol-Ctrl - Noise/Control/Correct']
 
 
-def get_file_extensions():
-    return {'events_fname': '-eve.fif', 'epochs_fname': '-epo.fif', 'evoked_fname': '-ave.fif',
-            'covariance_fname': '-cov.fif', 'trans_fname': '-trans.fif', 'forward_fname': '-fwd.fif',
-            'inverse_fname': '-inv.fif'}
-
-
 def get_channel_mapping():
     return {'Fp1': 'Fp1', 'Fpz': 'Fp2', 'Fp2': 'F7', 'F7': 'F3', 'F3': 'Fz', 'Fz': 'F4', 'F4': 'F8',
             'F8': 'FC5', 'FC5': 'FC1', 'FC1': 'FC2', 'FC2': 'FC6', 'FC6': 'T7', 'M1': 'C3', 'T7': 'Cz',
