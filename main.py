@@ -2,8 +2,11 @@ from src.models import batch
 
 
 def run():
-    test_batch = batch.generate_subjects()
-    test_read = batch.subject_read_EEG(test_batch)
+    test = batch.SubjectBatch()
+    test.load_subject_data()
+    test.generate_subjects()
+    test.subject_read_EEG()
+    test.subject_bandpass_raw()
     print('test')
 
 

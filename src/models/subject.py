@@ -12,6 +12,7 @@ class Subject:
 
     def __init__(self, name, path1, path2, list1, list2):
         self.MNE_Raw = None
+        self.MNE_Raw_filt = None
         self.raw_files = []
         self.name = name
         self.list1 = list1
@@ -30,3 +31,24 @@ class Subject:
             channel_mapping = get_channel_mapping()
             mne.rename_channels(self.MNE_Raw.info, channel_mapping)
         self.MNE_Raw.set_montage(cfg['PARAMS']['MONTAGE_FNAME'])
+
+    def bandpass_raw(self):
+        cfg = get_cfg_defaults()
+        cfg_params = cfg['PARAMS']
+        l_freq = cfg_params['L_FREQ']
+        h_freq = cfg_params['H_FREQ']
+        l_trans_bandwidth = cfg_params['L_TRANS_BANDWIDTH']
+        h_trans_bandwidth = cfg_params['H_TRANS_BANDWIDTH']
+        filter_length = cfg_params['FILTER_LENGTH']
+        method = cfg_params['METHOD']
+        n_jobs = cfg_params['N_JOBS']
+        self.MNE_Raw_filt = self.MNE_Raw.copy().filter(l_freq, h_freq,
+                                                       l_trans_bandwidth=l_trans_bandwidth,
+                                                       h_trans_bandwidth=h_trans_bandwidth,
+                                                       filter_length=filter_length,
+                                                       method=method,
+                                                       picks=mne.pick_types(self.MNE_Raw.info, eeg=True, eog=True),
+                                                       n_jobs=n_jobs)
+
+    def process_events(self):
+        pass

@@ -1,25 +1,21 @@
 import os
 import sys
 sys.path.append('../src')
-from src.config import config
-
-
-def _get_raw_path():
-    return config.get_raw_path()
+from src.config.config import get_raw_path
 
 
 def _get_subject_path(subject_name):
-    return _get_raw_path().joinpath(subject_name, 'EEG', 'SPIN')
+    return get_raw_path().joinpath(subject_name, 'EEG', 'SPIN')
 
 
 def _load_subjects():
-    raw_path = _get_raw_path()
+    raw_path = get_raw_path()
     return os.listdir(raw_path)
 
 
 def _load_lists(subjects):
     subject_lists = {}
-    raw_path = _get_raw_path()
+    raw_path = get_raw_path()
     for s in subjects:
         sub_path = _get_subject_path(s)
         sub_lists = os.listdir(sub_path)
