@@ -32,6 +32,7 @@ class SubjectBatch:
             list2 = subject_lists[s][1]
             path1 = subject_paths[s][0]
             path2 = subject_paths[s][1]
+            events_fname = subject_paths[s][2]
             self.batch[s] = subject.Subject(s, path1, path2, list1, list2)
 
     def subject_read_EEG(self):
@@ -41,3 +42,7 @@ class SubjectBatch:
     def subject_bandpass_raw(self):
         for name, sub in self.batch.items():
             sub.bandpass_raw()
+
+    def subject_event_processing(self):
+        for name, sub in self.batch.items():
+            sub.process_events()

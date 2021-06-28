@@ -3,6 +3,7 @@ import sys
 sys.path.append('../src')
 from src.config.config import get_cfg_defaults, get_channel_mapping
 import mne
+import numpy as np
 
 
 class Subject:
@@ -10,14 +11,17 @@ class Subject:
     Subject class for reading EEG data and performing pre-processing
     """
 
-    def __init__(self, name, path1, path2, list1, list2):
+    def __init__(self, name, path1, path2, events_fname, list1, list2):
         self.MNE_Raw = None
         self.MNE_Raw_filt = None
         self.raw_files = []
+        self.events = None
+        self.event_dict = None
         self.name = name
         self.list1 = list1
         self.list2 = list2
         self.paths = [path1, path2]
+        self.events_fname = events_fname
 
     def read_MNE_raw(self):
         cfg = get_cfg_defaults()
@@ -51,4 +55,15 @@ class Subject:
                                                        n_jobs=n_jobs)
 
     def process_events(self):
-        pass
+        self.events, self.event_dict = mne.events_from_annotations(self.MNE_Raw)
+
+        # Perform extra step to correct for wrong codes
+        cfg = get_cfg_defaults()
+        if self.list1 == 'a1l2':
+            codes2replace_idx = np.where(self.events[:, 2] < 3)
+            self.events[codes2replace_idx, 2] = cfg['EXPERIMENT']['CODES_A1L2']
+        if self.list2 == 'a2l2':
+            codes2replace_idx = np.where((self.events[:, 2] > 2) and (self.events[:, 2] < 5))
+            self.events[codes2replace_idx, 2] = cfg['EXPERIMENT']['CODES_A2L2']
+
+        mne.write_events(self.events_fname, self.events)

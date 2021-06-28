@@ -17,6 +17,7 @@ load_dotenv(dotenv_path)
 
 # Retrieve path to raw EEG data
 PATH_DATA_RAW = Path(os.getenv("PATH_DATA_RAW"))
+PATH_DATA_INTERIM = Path(os.getenv("PATH_DATA_INTERIM"))
 
 # Declare hyperparameters
 # More specific parameters for other experiments can be declared in separate YAML files
@@ -90,6 +91,13 @@ def get_raw_path():
     :return: The raw directory path as a resolved path
     """
     return PATH_DATA_RAW
+
+
+def get_interim_path():
+    """
+    :return: The interim directory path as a resolved path
+    """
+    return PATH_DATA_INTERIM
 
 
 def get_cfg_defaults():

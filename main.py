@@ -7,6 +7,7 @@ def run():
     test.generate_subjects()
     test.subject_read_EEG()
     test.subject_bandpass_raw()
+    test.subject_event_processing()
     print('test')
 
 
