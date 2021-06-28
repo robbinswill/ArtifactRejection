@@ -1,3 +1,10 @@
-from src.dataloader.subject import Subject
+from src.models import batch
 
-test = Subject("Will")
+
+def run():
+    test_batch = batch.generate_subjects()
+    print('test')
+
+
+if __name__ == '__main__':
+    run()
