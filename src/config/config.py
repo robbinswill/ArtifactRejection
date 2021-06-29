@@ -7,7 +7,6 @@ from dotenv import find_dotenv, load_dotenv
 from yacs.config import CfgNode as ConfigurationNode
 from pathlib import Path
 import os
-import pandas as pd
 
 # find .env automagically by walking up directories until it's found
 dotenv_path = find_dotenv()
@@ -18,7 +17,7 @@ load_dotenv(dotenv_path)
 # Retrieve path to raw EEG data
 PATH_DATA = Path(os.getenv("PATH_DATA"))
 PATH_DATA_RAW = PATH_DATA.joinpath('raw')
-PATH_DATA_INTERIM = PATH_DATA.joinpath('interim')
+PATH_DATA_PROCESSED = PATH_DATA.joinpath('processed')
 
 
 def get_data_path():
@@ -46,20 +45,22 @@ class FileExtensions:
                                            self.subject_name + "_" + self.list1.lower() + '.csv')
         self.csv2 = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG', 'SPIN', self.list2,
                                            self.subject_name + "_" + self.list2.lower() + '.csv')
-        self.events_fname = PATH_DATA_INTERIM.joinpath(self.subject_name, 'EEG', 'SPIN',
-                                                       self.subject_name + '-eve.fif')
-        self.epochs_fname = PATH_DATA_INTERIM.joinpath(self.subject_name, 'EEG', 'SPIN',
-                                                       self.subject_name + '-epo.fif')
-        self.evoked_fname = PATH_DATA_INTERIM.joinpath(self.subject_name, 'EEG', 'SPIN',
-                                                       self.subject_name + '-ave.fif')
-        self.covariance_fname = PATH_DATA_INTERIM.joinpath(self.subject_name, 'EEG', 'SPIN',
-                                                           self.subject_name + '-cov.fif')
-        self.trans_fname = PATH_DATA_INTERIM.joinpath(self.subject_name, 'EEG', 'SPIN',
-                                                      self.subject_name + '-trans.fif')
-        self.forward_fname = PATH_DATA_INTERIM.joinpath(self.subject_name, 'EEG', 'SPIN',
-                                                        self.subject_name + '-fwd.fif')
-        self.inverse_fname = PATH_DATA_INTERIM.joinpath(self.subject_name, 'EEG', 'SPIN',
-                                                        self.subject_name + '-inv.fif')
+        self.answers_xlsx = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG',
+                                                   self.subject_name + '_SPIN_answers.xlsx')
+        self.events_fname = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN',
+                                                         self.subject_name + '-eve.fif')
+        self.epochs_fname = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN',
+                                                         self.subject_name + '-epo.fif')
+        self.evoked_fname = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN',
+                                                         self.subject_name + '-ave.fif')
+        self.covariance_fname = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN',
+                                                             self.subject_name + '-cov.fif')
+        self.trans_fname = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN',
+                                                        self.subject_name + '-trans.fif')
+        self.forward_fname = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN',
+                                                          self.subject_name + '-fwd.fif')
+        self.inverse_fname = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN',
+                                                          self.subject_name + '-inv.fif')
 
 
 # Declare hyperparameters
@@ -86,20 +87,6 @@ __C.PARAMS.METHOD = 'fft'
 __C.PARAMS.N_JOBS = 1
 
 __C.EXPERIMENT = ConfigurationNode()
-__C.EXPERIMENT.EVENT_ID = ConfigurationNode()
-__C.EXPERIMENT.EVENT_ID.QUIETCONTROLCORRECT = 1
-__C.EXPERIMENT.EVENT_ID.QUIETVIOLATIONCORRECT = 2
-__C.EXPERIMENT.EVENT_ID.NOISECONTROLCORRECT = 3
-__C.EXPERIMENT.EVENT_ID.NOISEVIOLATIONCORRECT = 4
-__C.EXPERIMENT.EVENT_ID.VISUALCUE = 5
-__C.EXPERIMENT.EVENT_ID.QUIETCONTROLERROR = 11
-__C.EXPERIMENT.EVENT_ID.QUIETVIOLATIONERROR = 22
-__C.EXPERIMENT.EVENT_ID.NOISECONTROLERROR = 33
-__C.EXPERIMENT.EVENT_ID.NOISEVIOLATIONERROR = 44
-__C.EXPERIMENT.EVENT_ID.QUIETCONTROLPRACTICE = 100
-__C.EXPERIMENT.EVENT_ID.QUIETVIOLATIONPRACTICE = 200
-__C.EXPERIMENT.EVENT_ID.NOISECONTROLPRACTICE = 300
-__C.EXPERIMENT.EVENT_ID.NOISEVIOLATIONPRACTICE = 400
 __C.EXPERIMENT.COND_OF_INTEREST = ['Noise/Control/Correct', 'Noise/Control/Error', 'Noise/Control/Practice',
                                    'Noise/Violation/Correct', 'Noise/Violation/Error', 'Noise/Violation/Practice',
                                    'Quiet/Control/Correct', 'Quiet/Control/Error', 'Quiet/Control/Practice',
@@ -127,6 +114,23 @@ def get_channel_mapping():
             'PO4': 'P1', 'PO6': 'P2', 'FT7': 'P6', 'FT8': 'PO7', 'TP7': 'PO3', 'TP8': 'POz', 'PO7': 'PO4',
             'PO8': 'PO8', 'HEOG': 'HEOG', 'VEOG': 'VEOG',
             }
+
+
+def get_event_id():
+    return {'Quiet/Control/Correct': 1, 'Quiet/Violation/Correct': 2,
+            'Noise/Control/Correct': 3, 'Noise/Violation/Correct': 4,
+            'VisualCue': 5,
+
+            'Quiet/Control/Error': 11, 'Quiet/Violation/Error': 22,
+            'Noise/Control/Error': 33, 'Noise/Violation/Error': 44,
+
+            'Quiet/Control/Practice': 100, 'Quiet/Violation/Practice': 200,
+            'Noise/Control/Practice': 300, 'Noise/Violation/Practice': 400,
+            }
+
+
+def get_cond_of_interest():
+    return sorted(get_event_id().keys())
 
 
 def get_cfg_defaults():
