@@ -1,10 +1,14 @@
+import os
 import sys
 
 sys.path.append('../src')
 from src.config.config import get_cfg_defaults, get_channel_mapping, get_event_id
 import mne
+from autoreject import Ransac
+from autoreject.utils import interpolate_bads
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 
 class Subject:
@@ -12,6 +16,9 @@ class Subject:
     Subject class for reading EEG data and performing pre-processing
     """
     def __init__(self, name, paths):
+        self.epochs_clean = None
+        self.epochs = None
+        self.picks_eeg = None
         self.event_id = None
         self.event_id_actual = None
         self.actual_codes = None
@@ -25,6 +32,7 @@ class Subject:
         self.events = None
         self.event_dict = None
         self.name = name
+        self.processed_path = paths.processed_path
         self.list_names = [paths.list1, paths.list2]
         self.raw_paths = [paths.path1, paths.path2]
         self.events_fname = paths.events_fname
@@ -36,7 +44,15 @@ class Subject:
         self.inverse_fname = paths.inverse_fname
         self.answers_xlsx = paths.answers_xlsx
 
+
+    def _create_processed_dir(self):
+        Path(self.processed_path).mkdir(parents=True, exist_ok=True)
+
     def read_MNE_raw(self):
+        # First, create a directory for preprocessed data
+        self._create_processed_dir()
+
+        # Then begin reading in data for the Raw data structure
         cfg = get_cfg_defaults()
         eog_inds = cfg['PARAMS']['EOG_INDS']
         self.raw_files = [mne.io.read_raw_eeglab(f, eog=eog_inds, preload=False)
@@ -111,3 +127,18 @@ class Subject:
             if self.event_id[k] in self.actual_codes:
                 self.event_id_actual[k] = self.event_id[k]
         self.event_id = self.event_id_actual
+
+    def process_epochs(self):
+        cfg = get_cfg_defaults()
+        self.picks_eeg = mne.pick_types(self.MNE_Raw.info, eeg=True, eog=True, stim=False, exclude=[])
+        self.epochs = mne.Epochs(self.MNE_Raw, self.events, cfg['PARAMS']['TMIN'], cfg['PARAMS']['TMAX'], proj=False,
+                                 picks=self.picks_eeg, baseline=cfg['PARAMS']['BASELINE'], detrend=1, preload=True,
+                                 reject=dict(eeg=500e-6,
+                                             eog=500e-6)
+                                 )
+        # Plot epochs and reject bad trials
+        # Code used is from autoreject API example
+        ransac = Ransac(verbose='progressbar', picks=self.picks_eeg, n_jobs=1)
+        self.epochs_clean = ransac.fit_transform(self.epochs)
+        # Get list of bad channels computes by Ransac
+        print('\n'.join(ransac.bad_chs_))

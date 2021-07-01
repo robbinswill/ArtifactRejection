@@ -37,6 +37,7 @@ class FileExtensions:
         self.subject_name = subject_name
         self.list1 = list1
         self.list2 = list2
+        self.processed_path = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN')
         self.path1 = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG', 'SPIN', self.list1,
                                             self.subject_name + '_SPIN_' + self.list1.lower() + '.set')
         self.path2 = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG', 'SPIN', self.list2,
