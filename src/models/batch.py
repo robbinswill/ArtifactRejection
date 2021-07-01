@@ -26,3 +26,4 @@ class SubjectBatch:
             sub.process_events()
             sub.read_behavioural_log()
             sub.process_epochs()
+            sub.process_ICA()

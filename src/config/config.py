@@ -46,7 +46,7 @@ class FileExtensions:
                                            self.subject_name + "_" + self.list1.lower() + '.csv')
         self.csv2 = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG', 'SPIN', self.list2,
                                            self.subject_name + "_" + self.list2.lower() + '.csv')
-        self.answers_xlsx = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG',
+        self.answers_xlsx = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG', 'SPIN',
                                                    self.subject_name + '_SPIN_answers.xlsx')
         self.events_fname = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN',
                                                          self.subject_name + '-eve.fif')

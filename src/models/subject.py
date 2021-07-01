@@ -152,3 +152,6 @@ class Subject:
         self.epochs_clean = ransac.fit_transform(self.epochs)
         # Get list of bad channels computes by Ransac
         print('\n'.join(ransac.bad_chs_))
+
+    def process_ICA(self):
+        pass
