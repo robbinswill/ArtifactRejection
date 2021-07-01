@@ -1,4 +1,3 @@
-import os
 import sys
 
 sys.path.append('../src')
@@ -15,6 +14,7 @@ class Subject:
     """
     Subject class for reading EEG data and performing pre-processing
     """
+
     def __init__(self, name, paths):
         self.epochs_clean = None
         self.epochs = None
@@ -44,7 +44,6 @@ class Subject:
         self.inverse_fname = paths.inverse_fname
         self.answers_xlsx = paths.answers_xlsx
 
-
     def _create_processed_dir(self):
         Path(self.processed_path).mkdir(parents=True, exist_ok=True)
 
@@ -63,6 +62,8 @@ class Subject:
         if self.MNE_Raw.ch_names[1] == 'Fpz':
             channel_mapping = get_channel_mapping()
             mne.rename_channels(self.MNE_Raw.info, channel_mapping)
+
+        # Set the montage
         self.MNE_Raw.set_montage(cfg['PARAMS']['MONTAGE_FNAME'])
 
     def bandpass_raw(self):
@@ -101,7 +102,7 @@ class Subject:
         self.acc_data = pd.DataFrame()
         for block in np.arange(0, np.size(self.list_names)):
             self.acc_data = self.acc_data.append(pd.read_excel(self.answers_xlsx,
-                                                 sheet_name=block, usecols=[0,1], header=None))
+                                                               sheet_name=block, usecols=[0, 1], header=None))
         self.acc_data = self.acc_data[self.acc_data[0] != 'accuracy']
         self.acc_data = self.acc_data.dropna()
         self.acc_data = self.acc_data.rename(columns={0: 'word', 1: 'correct'})
@@ -113,10 +114,11 @@ class Subject:
         # Find indices of error trials
         self.err_indices = np.where(self.acc_data['correct'] == 0)[0]
         # Replaces codes for error trials with a code that doubles its numeral
-        self.events_target[0][self.err_indices] = self.events_target[0][self.err_indices] * 10 + self.events_target[0][self.err_indices]
+        self.events_target[0][self.err_indices] = self.events_target[0][self.err_indices] * 10 + self.events_target[0][
+            self.err_indices]
         # Exclude first 8 practice trials
         self.events_target[0][:8] = self.events_target[0][:8] * 100
-        self.events_target[0][88:88+8] = self.events_target[0][88:88+8] * 100
+        self.events_target[0][88:88 + 8] = self.events_target[0][88:88 + 8] * 100
         # Merge modified codes into events structure
         self.events[self.target_codes_idx, 2] = self.events_target
         # Remove absent codes from event_id dict
@@ -130,12 +132,20 @@ class Subject:
 
     def process_epochs(self):
         cfg = get_cfg_defaults()
-        self.picks_eeg = mne.pick_types(self.MNE_Raw.info, eeg=True, eog=True, stim=False, exclude=[])
-        self.epochs = mne.Epochs(self.MNE_Raw, self.events, cfg['PARAMS']['TMIN'], cfg['PARAMS']['TMAX'], proj=False,
-                                 picks=self.picks_eeg, baseline=cfg['PARAMS']['BASELINE'], detrend=1, preload=True,
-                                 reject=dict(eeg=500e-6,
-                                             eog=500e-6)
+        # Use filtered or unfiltered Raw?
+        # Unsure on picks_eeg
+        self.picks_eeg = mne.pick_types(self.MNE_Raw_filt.info, eeg=True, eog=True, stim=False, exclude=[])
+        self.epochs = mne.Epochs(raw=self.MNE_Raw_filt, events=self.events, event_id=self.event_id,
+                                 tmin=cfg['PARAMS']['TMIN'], tmax=cfg['PARAMS']['TMAX'], proj=False,
+                                 picks=self.picks_eeg,
+                                 baseline=cfg['PARAMS']['BASELINE'], detrend=1, preload=True,
+                                 reject=dict(eeg=500e-6,  # V (EEG channels)
+                                             eog=500e-6  # V (EOG channels)
+                                             )
                                  )
+        # Set eog=False for autoreject (chs issue)
+        self.picks_eeg = mne.pick_types(self.epochs.info, eeg=True, eog=False, stim=False, include=[], exclude=[])
+
         # Plot epochs and reject bad trials
         # Code used is from autoreject API example
         ransac = Ransac(verbose='progressbar', picks=self.picks_eeg, n_jobs=1)
