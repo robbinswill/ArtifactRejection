@@ -34,7 +34,7 @@ class Subject:
         self.name = name
         self.processed_path = paths.processed_path
         self.list_names = [paths.list1, paths.list2]
-        self.raw_paths = [paths.path1, paths.path2]
+        self.raw_paths = [paths.eeg1, paths.eeg2]
         self.events_fname = paths.events_fname
         self.epochs_fname = paths.epochs_fname
         self.evoked_fname = paths.evoked_fname
@@ -42,7 +42,7 @@ class Subject:
         self.trans_fname = paths.trans_fname
         self.forward_fname = paths.forward_fname
         self.inverse_fname = paths.inverse_fname
-        self.answers_xlsx = paths.answers_xlsx
+        self.answers = paths.answers
 
     def _create_processed_dir(self):
         Path(self.processed_path).mkdir(parents=True, exist_ok=True)
@@ -101,7 +101,7 @@ class Subject:
     def read_behavioural_log(self):
         self.acc_data = pd.DataFrame()
         for block in np.arange(0, np.size(self.list_names)):
-            self.acc_data = self.acc_data.append(pd.read_excel(self.answers_xlsx,
+            self.acc_data = self.acc_data.append(pd.read_excel(self.answers,
                                                                sheet_name=block, usecols=[0, 1], header=None))
         self.acc_data = self.acc_data[self.acc_data[0] != 'accuracy']
         self.acc_data = self.acc_data.dropna()
@@ -132,7 +132,6 @@ class Subject:
 
     def process_epochs(self):
         cfg = get_cfg_defaults()
-        # Use filtered or unfiltered Raw?
         # Unsure on picks_eeg
         self.picks_eeg = mne.pick_types(self.MNE_Raw_filt.info, eeg=True, eog=True, stim=False, exclude=[])
         self.epochs = mne.Epochs(raw=self.MNE_Raw_filt, events=self.events, event_id=self.event_id,
@@ -143,7 +142,6 @@ class Subject:
                                              eog=500e-6  # V (EOG channels)
                                              )
                                  )
-        # Set eog=False for autoreject (chs issue)
         self.picks_eeg = mne.pick_types(self.epochs.info, eeg=True, eog=False, stim=False, include=[], exclude=[])
 
         # Plot epochs and reject bad trials

@@ -10,58 +10,20 @@ import os
 
 # find .env automagically by walking up directories until it's found
 dotenv_path = find_dotenv()
-
 # load up the entries as environment variables*
 load_dotenv(dotenv_path)
 
+
+def get_subject_lists_csv():
+    return Path.cwd().joinpath('nagl_dataset', 'sourcedata', 'subject_lists.csv')
+
+
 # Retrieve path to raw EEG data
 PATH_DATA = Path(os.getenv("PATH_DATA"))
-PATH_DATA_RAW = PATH_DATA.joinpath('raw')
-PATH_DATA_PROCESSED = PATH_DATA.joinpath('processed')
 
 
 def get_data_path():
     return PATH_DATA
-
-
-def get_raw_path():
-    return PATH_DATA_RAW
-
-
-def get_lists_path(name):
-    return PATH_DATA_RAW.joinpath(name, 'EEG', 'SPIN')
-
-
-class FileExtensions:
-    def __init__(self, subject_name, list1, list2):
-        self.subject_name = subject_name
-        self.list1 = list1
-        self.list2 = list2
-        self.processed_path = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN')
-        self.path1 = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG', 'SPIN', self.list1,
-                                            self.subject_name + '_SPIN_' + self.list1.lower() + '.set')
-        self.path2 = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG', 'SPIN', self.list2,
-                                            self.subject_name + '_SPIN_' + self.list2.lower() + '.set')
-        self.csv1 = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG', 'SPIN', self.list1,
-                                           self.subject_name + "_" + self.list1.lower() + '.csv')
-        self.csv2 = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG', 'SPIN', self.list2,
-                                           self.subject_name + "_" + self.list2.lower() + '.csv')
-        self.answers_xlsx = PATH_DATA_RAW.joinpath(self.subject_name, 'EEG', 'SPIN',
-                                                   self.subject_name + '_SPIN_answers.xlsx')
-        self.events_fname = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN',
-                                                         self.subject_name + '-eve.fif')
-        self.epochs_fname = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN',
-                                                         self.subject_name + '-epo.fif')
-        self.evoked_fname = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN',
-                                                         self.subject_name + '-ave.fif')
-        self.covariance_fname = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN',
-                                                             self.subject_name + '-cov.fif')
-        self.trans_fname = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN',
-                                                        self.subject_name + '-trans.fif')
-        self.forward_fname = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN',
-                                                          self.subject_name + '-fwd.fif')
-        self.inverse_fname = PATH_DATA_PROCESSED.joinpath(self.subject_name, 'EEG', 'SPIN',
-                                                          self.subject_name + '-inv.fif')
 
 
 # Declare hyperparameters
@@ -86,6 +48,7 @@ __C.PARAMS.BASELINE = (None, 0)
 __C.PARAMS.MONTAGE_FNAME = 'standard_1005'
 __C.PARAMS.METHOD = 'fft'
 __C.PARAMS.N_JOBS = 1
+__C.PARAMS.LINE_FREQ = 60
 
 __C.EXPERIMENT = ConfigurationNode()
 __C.EXPERIMENT.COND_OF_INTEREST = ['Noise/Control/Correct', 'Noise/Control/Error', 'Noise/Control/Practice',
