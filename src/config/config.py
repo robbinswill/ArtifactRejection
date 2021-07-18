@@ -15,7 +15,7 @@ load_dotenv(dotenv_path)
 
 
 def get_subject_lists_csv():
-    return Path.cwd().joinpath('nagl_dataset', 'sourcedata', 'subject_lists.csv')
+    return Path.cwd().joinpath('nagl_dataset', 'sourcedata', 'subject_master.csv')
 
 
 # Retrieve path to raw EEG data
@@ -36,19 +36,29 @@ __C.DESCRIPTION = 'Default config for subject preprocessing'
 __C.PARAMS = ConfigurationNode()
 __C.PARAMS.TMIN = -0.2
 __C.PARAMS.TMAX = 1.0
+__C.PARAMS.LINE_FREQ = 60
 __C.PARAMS.EOG_INDS = [64, 65]
 __C.PARAMS.L_FREQ = 0.1
-__C.PARAMS.H_FREQ = 30.0
+__C.PARAMS.H_FREQ = 50.0
+__C.PARAMS.L_FREQ_ICA = 1.
 __C.PARAMS.L_TRANS_BANDWIDTH = 'auto'
 __C.PARAMS.H_TRANS_BANDWIDTH = 'auto'
 __C.PARAMS.FILTER_LENGTH = 'auto'
+__C.PARAMS.FILTER_METHOD = 'fir'
+__C.PARAMS.FILTER_PICKS = ['eeg', 'eog', 'bio']
 __C.PARAMS.ICA_RANDOM_STATE = 42
 __C.PARAMS.N_COMPONENTS = 0.975
 __C.PARAMS.BASELINE = (None, 0)
 __C.PARAMS.MONTAGE_FNAME = 'standard_1005'
 __C.PARAMS.METHOD = 'fft'
 __C.PARAMS.N_JOBS = 1
-__C.PARAMS.LINE_FREQ = 60
+__C.PARAMS.T_STEP = 1.0
+__C.PARAMS.NUM_EXCL = 0
+__C.PARAMS.Z_THRESHOLD = 3.0
+__C.PARAMS.Z_STEP = 0.2
+__C.PARAMS.DETREND = 1
+__C.PARAMS.REF_CHANNELS = ['TP9', 'TP10']
+
 
 __C.EXPERIMENT = ConfigurationNode()
 __C.EXPERIMENT.COND_OF_INTEREST = ['Noise/Control/Correct', 'Noise/Control/Error', 'Noise/Control/Practice',

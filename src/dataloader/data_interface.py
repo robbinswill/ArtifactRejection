@@ -6,6 +6,8 @@ to the .set EEG recordings
 
 from src.config.config import get_subject_lists_csv, get_data_path
 import pandas as pd
+from pathlib import Path
+import os
 
 
 def _load_subject_info():
@@ -45,18 +47,22 @@ class PathGenerator:
         self.answers = get_data_path().joinpath('sourcedata', 'sub-' + self.subject_id,
                                                 self.subject_id + '_SPIN_answers.xlsx')
         self.events_fname = get_data_path().joinpath('derivatives', 'sub-' + self.subject_id,
-                                                     self.subject_id + '-eve.fif')
+                                                     'preprocessed', self.subject_id + '-eve.fif')
         self.epochs_fname = get_data_path().joinpath('derivatives', 'sub-' + self.subject_id,
-                                                     self.subject_id + '-epo.fif')
+                                                     'preprocessed', self.subject_id + '-epo.fif')
         self.evoked_fname = get_data_path().joinpath('derivatives', 'sub-' + self.subject_id,
-                                                     self.subject_id + '-ave.fif')
+                                                     'preprocessed', self.subject_id + '-ave.fif')
         self.covariance_fname = get_data_path().joinpath('derivatives', 'sub-' + self.subject_id,
-                                                         self.subject_id + '-cov.fif')
+                                                         'preprocessed', self.subject_id + '-cov.fif')
         self.trans_fname = get_data_path().joinpath('derivatives', 'sub-' + self.subject_id,
-                                                    self.subject_id + '-trans.fif')
+                                                    'preprocessed', self.subject_id + '-trans.fif')
         self.forward_fname = get_data_path().joinpath('derivatives', 'sub-' + self.subject_id,
-                                                      self.subject_id + '-fwd.fif')
+                                                      'preprocessed', self.subject_id + '-fwd.fif')
         self.inverse_fname = get_data_path().joinpath('derivatives', 'sub-' + self.subject_id,
-                                                      self.subject_id + '-inv.fif')
+                                                      'preprocessed', self.subject_id + '-inv.fif')
         self.processed_path = get_data_path().joinpath('derivatives', 'sub-' + self.subject_id,
                                                        'preprocessed')
+        self.plot_path = get_data_path().joinpath('derivatives', 'sub-' + self.subject_id,
+                                                  'plots')
+        self.report_fname = get_data_path().joinpath('derivatives', 'sub-' + self.subject_id,
+                                                     'plots', 'sub-' + self.subject_id + '_report.html')

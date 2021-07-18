@@ -3,8 +3,7 @@ import sys
 sys.path.append('../src')
 from src.config.config import get_cfg_defaults, get_channel_mapping, get_event_id
 import mne
-from autoreject import Ransac
-from autoreject.utils import interpolate_bads
+from autoreject import Ransac, get_rejection_threshold, AutoReject
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -43,15 +42,19 @@ class Subject:
         self.forward_fname = paths.forward_fname
         self.inverse_fname = paths.inverse_fname
         self.answers = paths.answers
+        self.plot_path = paths.plot_path
+        self.report = mne.Report(verbose=True)
+        self.report_fname = paths.report_fname
 
-    def _create_processed_dir(self):
+        # First, create a directory for preprocessed data
         Path(self.processed_path).mkdir(parents=True, exist_ok=True)
+        # Create a path for plots
+        Path(self.plot_path).mkdir(parents=True, exist_ok=True)
+
 
     def read_MNE_raw(self):
-        # First, create a directory for preprocessed data
-        self._create_processed_dir()
 
-        # Then begin reading in data for the Raw data structure
+        # Begin reading in data for the Raw data structure
         cfg = get_cfg_defaults()
         eog_inds = cfg['PARAMS']['EOG_INDS']
         self.raw_files = [mne.io.read_raw_eeglab(f, eog=eog_inds, preload=False)
@@ -65,24 +68,6 @@ class Subject:
 
         # Set the montage
         self.MNE_Raw.set_montage(cfg['PARAMS']['MONTAGE_FNAME'])
-
-    def bandpass_raw(self):
-        cfg = get_cfg_defaults()
-        cfg_params = cfg['PARAMS']
-        l_freq = cfg_params['L_FREQ']
-        h_freq = cfg_params['H_FREQ']
-        l_trans_bandwidth = cfg_params['L_TRANS_BANDWIDTH']
-        h_trans_bandwidth = cfg_params['H_TRANS_BANDWIDTH']
-        filter_length = cfg_params['FILTER_LENGTH']
-        method = cfg_params['METHOD']
-        n_jobs = cfg_params['N_JOBS']
-        self.MNE_Raw_filt = self.MNE_Raw.copy().filter(l_freq, h_freq,
-                                                       l_trans_bandwidth=l_trans_bandwidth,
-                                                       h_trans_bandwidth=h_trans_bandwidth,
-                                                       filter_length=filter_length,
-                                                       method=method,
-                                                       picks=mne.pick_types(self.MNE_Raw.info, eeg=True, eog=True),
-                                                       n_jobs=n_jobs)
 
     def process_events(self):
         self.events, self.event_dict = mne.events_from_annotations(self.MNE_Raw)
@@ -130,26 +115,95 @@ class Subject:
                 self.event_id_actual[k] = self.event_id[k]
         self.event_id = self.event_id_actual
 
-    def process_epochs(self):
-        cfg = get_cfg_defaults()
-        # Unsure on picks_eeg
-        self.picks_eeg = mne.pick_types(self.MNE_Raw_filt.info, eeg=True, eog=True, stim=False, exclude=[])
-        self.epochs = mne.Epochs(raw=self.MNE_Raw_filt, events=self.events, event_id=self.event_id,
-                                 tmin=cfg['PARAMS']['TMIN'], tmax=cfg['PARAMS']['TMAX'], proj=False,
-                                 picks=self.picks_eeg,
-                                 baseline=cfg['PARAMS']['BASELINE'], detrend=1, preload=True,
-                                 reject=dict(eeg=500e-6,  # V (EEG channels)
-                                             eog=500e-6  # V (EOG channels)
-                                             )
-                                 )
-        self.picks_eeg = mne.pick_types(self.epochs.info, eeg=True, eog=False, stim=False, include=[], exclude=[])
+    def preprocessing(self):
+        # Retrieve parameters from configuration file
+        cfg_params = get_cfg_defaults()['PARAMS']
+        l_freq_ica = cfg_params['L_FREQ_ICA']
+        h_freq = cfg_params['H_FREQ']
+        l_freq = cfg_params['L_FREQ']
+        l_trans_bandwidth = cfg_params['L_TRANS_BANDWIDTH']
+        h_trans_bandwidth = cfg_params['H_TRANS_BANDWIDTH']
+        filter_length = cfg_params['FILTER_LENGTH']
+        filter_method = cfg_params['FILTER_METHOD']
+        n_jobs = cfg_params['N_JOBS']
+        filter_picks = cfg_params['FILTER_PICKS']
+        t_step = cfg_params['T_STEP']
+        random_state = cfg_params['ICA_RANDOM_STATE']
+        n_components = cfg_params['N_COMPONENTS']
+        num_excl = cfg_params['NUM_EXCL']
+        z_thresh = cfg_params['Z_THRESHOLD']
+        z_step = cfg_params['Z_STEP']
+        t_min = cfg_params['TMIN']
+        t_max = cfg_params['TMAX']
+        detrend = cfg_params['DETREND']
+        baseline = cfg_params['BASELINE'][0]
+        ref_channels = cfg_params['REF_CHANNELS']
 
-        # Plot epochs and reject bad trials
-        # Code used is from autoreject API example
-        ransac = Ransac(verbose='progressbar', picks=self.picks_eeg, n_jobs=1)
-        self.epochs_clean = ransac.fit_transform(self.epochs)
-        # Get list of bad channels computes by Ransac
-        print('\n'.join(ransac.bad_chs_))
+        # Generate two copies of the raw object:
+        # Filter data w/ 1.0Hz lowpass cutoff for ICA
+        raw_ica = self.MNE_Raw.copy().filter(l_freq=l_freq_ica, h_freq=h_freq,
+                                             l_trans_bandwidth=l_trans_bandwidth,
+                                             h_trans_bandwidth=h_trans_bandwidth,
+                                             filter_length=filter_length,
+                                             method=filter_method,
+                                             picks=mne.pick_types(self.MNE_Raw.info, eeg=True, eog=True),
+                                             n_jobs=n_jobs)
 
-    def process_ICA(self):
-        pass
+        # Bandpass filter second copy of MNE_raw
+        raw_filt = self.MNE_Raw.copy().filter(l_freq=l_freq, h_freq=h_freq,
+                                              l_trans_bandwidth=l_trans_bandwidth,
+                                              h_trans_bandwidth=h_trans_bandwidth,
+                                              filter_length=filter_length,
+                                              method=filter_method,
+                                              picks=filter_picks,
+                                              n_jobs=n_jobs)
+        raw_filt_plot = raw_filt.plot_psd(fmax=65, n_jobs=n_jobs, average=False, spatial_colors=True, show=False)
+        self.report.add_figs_to_section(raw_filt_plot, captions='Raw data: Filtered', section='Preprocessing')
+        self.report.save(self.report_fname, overwrite=True, open_browser=False)
+
+        # Convert raw_ica to a series of 1s epochs
+        events_ica = mne.make_fixed_length_events(raw_ica, duration=t_step)
+        epochs_ica = mne.Epochs(raw_ica, events_ica, tmin=0.0, tmax=t_step, baseline=None, preload=True)
+        del events_ica
+
+        # Mark bad channels and exclude them from ICA fitting, using RANSAC algorithm
+        ransac = Ransac(n_jobs=n_jobs, random_state=random_state)
+        ransac.fit(epochs_ica)
+        epochs_ica.info['bads'] = ransac.bad_chs_
+
+        # Auto-determine rejection threshold (dict) to eliminate noisy trials from ICA fitting
+        reject = get_rejection_threshold(epochs_ica)
+
+        # Fit ICA to the raw data
+        ica = mne.preprocessing.ICA(n_components=n_components,
+                                    random_state=random_state)
+        ica.fit(epochs_ica, reject=reject, tstep=t_step)
+
+        # Identify independent components associated with EOG artifacts
+        ica.exclude = []
+        eog_indices = None
+
+        while num_excl < 2:
+            eog_indices, eog_scores = ica.find_bads_eog(raw_ica, threshold=z_thresh)
+            num_excl = len(eog_indices)
+            z_thresh -= z_step
+
+        # Finally, ICA should have dropped ocular artifacts
+        ica.exclude = eog_indices
+
+        # Segment filtered raw data into epochs
+        epochs = mne.Epochs(raw_filt, self.events, self.event_id, t_min, t_max,
+                            baseline=baseline, detrend=detrend, reject=None, flat=None, preload=True)
+
+        # Apply ICA correction
+        epochs_postica = ica.apply(epochs.copy())
+        epochs_postica.info['bads'] = ransac.bad_chs_
+        epochs_postica = epochs_postica.interpolate_bads()
+
+        # Apply AutoReject to epochs to clean up noise
+        ar = AutoReject(n_jobs=n_jobs, random_state=random_state, verbose=False)
+        epochs_clean = ar.fit_transform(epochs_postica)
+        epochs_clean.set_eeg_reference(ref_channels=ref_channels)
+
+        # Save cleaned epochs
+        epochs_clean.save(self.epochs_fname, overwrite=True)
