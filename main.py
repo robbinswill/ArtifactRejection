@@ -5,6 +5,7 @@ def run():
     test = batch.SubjectBatch()
     test.generate_subjects()
     test.execute_preprocessing()
+
     print('test')
 
 

@@ -39,7 +39,7 @@ __C.PARAMS.TMAX = 1.0
 __C.PARAMS.LINE_FREQ = 60
 __C.PARAMS.EOG_INDS = [64, 65]
 __C.PARAMS.L_FREQ = 0.1
-__C.PARAMS.H_FREQ = 50.0
+__C.PARAMS.H_FREQ = 30.0
 __C.PARAMS.L_FREQ_ICA = 1.
 __C.PARAMS.L_TRANS_BANDWIDTH = 'auto'
 __C.PARAMS.H_TRANS_BANDWIDTH = 'auto'
@@ -59,21 +59,13 @@ __C.PARAMS.Z_STEP = 0.2
 __C.PARAMS.DETREND = 1
 __C.PARAMS.REF_CHANNELS = ['TP9', 'TP10']
 
-
 __C.EXPERIMENT = ConfigurationNode()
-__C.EXPERIMENT.COND_OF_INTEREST = ['Noise/Control/Correct', 'Noise/Control/Error', 'Noise/Control/Practice',
-                                   'Noise/Violation/Correct', 'Noise/Violation/Error', 'Noise/Violation/Practice',
-                                   'Quiet/Control/Correct', 'Quiet/Control/Error', 'Quiet/Control/Practice',
-                                   'Quiet/Violation/Correct', 'Quiet/Violation/Error', 'Quiet/Violation/Practice',
-                                   'VisualCue']
 __C.EXPERIMENT.CODES_A1L2 = [2, 1, 2, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2, 1, 2, 1, 2, 1, 1, 2, 1, 1, 2, 2, 1, 1, 1, 2, 1,
                              2, 1, 2, 2, 1, 1, 2, 2, 2, 1, 2, 1, 1, 1, 2, 2, 1, 1, 2, 1, 2, 2, 2, 2, 1, 1, 2, 1, 1, 2,
                              2, 2, 1, 2, 2, 1, 2, 1, 1, 2, 1, 2, 1, 2, 1, 1, 1, 2, 1, 2, 2, 2, 1, 1, 2, 1, 1, 2]
 __C.EXPERIMENT.CODES_A2L2 = [4, 3, 4, 3, 3, 4, 4, 4, 3, 3, 3, 4, 4, 4, 3, 4, 3, 4, 3, 3, 4, 3, 3, 4, 4, 3, 3, 3, 4, 3,
                              4, 3, 4, 4, 3, 3, 4, 4, 4, 3, 4, 3, 3, 3, 4, 4, 3, 3, 4, 3, 4, 4, 4, 4, 3, 3, 4, 3, 3, 4,
                              4, 4, 3, 4, 4, 3, 4, 3, 3, 4, 3, 4, 3, 4, 3, 3, 3, 4, 3, 4, 4, 4, 3, 3, 4, 3, 3, 4]
-__C.EXPERIMENT.EXPT_CONTRASTS = ['Quiet_Viol-Ctrl - Quiet/Violation/Correct', 'Quiet_Viol-Ctrl - Quiet/Control/Correct',
-                                 'Noise_Viol-Ctrl - Noise/Violation/Correct', 'Noise_Viol-Ctrl - Noise/Control/Correct']
 
 
 def get_channel_mapping():
@@ -100,6 +92,12 @@ def get_event_id():
 
             'Quiet/Control/Practice': 100, 'Quiet/Violation/Practice': 200,
             'Noise/Control/Practice': 300, 'Noise/Violation/Practice': 400,
+            }
+
+
+def get_expt_contrasts():
+    return {'Quiet_Viol-Ctrl': ['Quiet/Violation/Correct', 'Quiet/Control/Correct'],
+            'Noise_Viol-Ctrl': ['Noise/Violation/Correct', 'Noise/Control/Correct'],
             }
 
 

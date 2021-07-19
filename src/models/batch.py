@@ -22,7 +22,14 @@ class SubjectBatch:
 
     def execute_preprocessing(self):
         for name, sub in self.subject_batch.items():
+            print('Processing subject: ' + name)
+            print('Reading raw files...')
             sub.read_MNE_raw()
+            print('Processing events...')
             sub.process_events()
+            print('Reading behavioural log...')
             sub.read_behavioural_log()
+            print('Preprocessing...')
             sub.preprocessing()
+            print('Creating evoked responses...')
+            sub.evoked()

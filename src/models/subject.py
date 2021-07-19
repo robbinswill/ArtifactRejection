@@ -1,7 +1,7 @@
 import sys
 
 sys.path.append('../src')
-from src.config.config import get_cfg_defaults, get_channel_mapping, get_event_id
+from src.config.config import get_cfg_defaults, get_channel_mapping, get_event_id, get_expt_contrasts
 import mne
 from autoreject import Ransac, get_rejection_threshold, AutoReject
 import numpy as np
@@ -15,19 +15,16 @@ class Subject:
     """
 
     def __init__(self, name, paths):
+        self.report = mne.Report(verbose=True)
+        self.evokeds = None
+        self.diffs = None
         self.epochs_clean = None
         self.epochs = None
         self.picks_eeg = None
         self.event_id = None
-        self.event_id_actual = None
-        self.actual_codes = None
-        self.err_indices = None
-        self.events_target = None
-        self.target_codes_idx = None
         self.acc_data = None
         self.MNE_Raw = None
         self.MNE_Raw_filt = None
-        self.raw_files = None
         self.events = None
         self.event_dict = None
         self.name = name
@@ -43,7 +40,6 @@ class Subject:
         self.inverse_fname = paths.inverse_fname
         self.answers = paths.answers
         self.plot_path = paths.plot_path
-        self.report = mne.Report(verbose=True)
         self.report_fname = paths.report_fname
 
         # First, create a directory for preprocessed data
@@ -51,15 +47,14 @@ class Subject:
         # Create a path for plots
         Path(self.plot_path).mkdir(parents=True, exist_ok=True)
 
-
     def read_MNE_raw(self):
 
         # Begin reading in data for the Raw data structure
         cfg = get_cfg_defaults()
         eog_inds = cfg['PARAMS']['EOG_INDS']
-        self.raw_files = [mne.io.read_raw_eeglab(f, eog=eog_inds, preload=False)
-                          for f in self.raw_paths]
-        self.MNE_Raw = mne.concatenate_raws(self.raw_files, preload=True)
+        raw_files = [mne.io.read_raw_eeglab(f, eog=eog_inds, preload=False)
+                     for f in self.raw_paths]
+        self.MNE_Raw = mne.concatenate_raws(raw_files, preload=True)
 
         # Check for incorrect channels
         if self.MNE_Raw.ch_names[1] == 'Fpz':
@@ -84,36 +79,35 @@ class Subject:
         mne.write_events(self.events_fname, self.events)
 
     def read_behavioural_log(self):
-        self.acc_data = pd.DataFrame()
+        acc_data = pd.DataFrame()
         for block in np.arange(0, np.size(self.list_names)):
-            self.acc_data = self.acc_data.append(pd.read_excel(self.answers,
-                                                               sheet_name=block, usecols=[0, 1], header=None))
-        self.acc_data = self.acc_data[self.acc_data[0] != 'accuracy']
-        self.acc_data = self.acc_data.dropna()
-        self.acc_data = self.acc_data.rename(columns={0: 'word', 1: 'correct'})
+            acc_data = acc_data.append(pd.read_excel(self.answers,
+                                                     sheet_name=block, usecols=[0, 1], header=None))
+        acc_data = acc_data[acc_data[0] != 'accuracy']
+        acc_data = acc_data.dropna()
+        self.acc_data = acc_data.rename(columns={0: 'word', 1: 'correct'})
 
         # Modify codes for error trials
         # Find codes for target words
-        self.target_codes_idx = np.where(self.events[:, 2] < 5)
-        self.events_target = self.events[self.target_codes_idx, 2]
+        target_codes_idx = np.where(self.events[:, 2] < 5)
+        events_target = self.events[target_codes_idx, 2]
         # Find indices of error trials
-        self.err_indices = np.where(self.acc_data['correct'] == 0)[0]
+        err_indices = np.where(self.acc_data['correct'] == 0)[0]
         # Replaces codes for error trials with a code that doubles its numeral
-        self.events_target[0][self.err_indices] = self.events_target[0][self.err_indices] * 10 + self.events_target[0][
-            self.err_indices]
+        events_target[0][err_indices] = events_target[0][err_indices] * 10 + events_target[0][err_indices]
         # Exclude first 8 practice trials
-        self.events_target[0][:8] = self.events_target[0][:8] * 100
-        self.events_target[0][88:88 + 8] = self.events_target[0][88:88 + 8] * 100
+        events_target[0][:8] = events_target[0][:8] * 100
+        events_target[0][88:88 + 8] = events_target[0][88:88 + 8] * 100
         # Merge modified codes into events structure
-        self.events[self.target_codes_idx, 2] = self.events_target
+        self.events[target_codes_idx, 2] = events_target
         # Remove absent codes from event_id dict
         self.event_id = get_event_id()
-        self.actual_codes = [i for i in list(self.event_id.values()) if i in np.unique(self.events[:, 2])]
-        self.event_id_actual = {}
+        actual_codes = [i for i in list(self.event_id.values()) if i in np.unique(self.events[:, 2])]
+        event_id_actual = {}
         for k in self.event_id.keys():
-            if self.event_id[k] in self.actual_codes:
-                self.event_id_actual[k] = self.event_id[k]
-        self.event_id = self.event_id_actual
+            if self.event_id[k] in actual_codes:
+                event_id_actual[k] = self.event_id[k]
+        self.event_id = event_id_actual
 
     def preprocessing(self):
         # Retrieve parameters from configuration file
@@ -149,17 +143,28 @@ class Subject:
                                              picks=mne.pick_types(self.MNE_Raw.info, eeg=True, eog=True),
                                              n_jobs=n_jobs)
 
+        # Plot frequency spectrum prior to filtering
+        self.report.add_figs_to_section(
+            self.MNE_Raw.plot_psd(fmax=80, n_jobs=n_jobs, average=False,
+                                  spatial_colors=True, show=False),
+            captions='Raw data: Unfiltered', section='Preprocessing'
+        )
+
         # Bandpass filter second copy of MNE_raw
-        raw_filt = self.MNE_Raw.copy().filter(l_freq=l_freq, h_freq=h_freq,
-                                              l_trans_bandwidth=l_trans_bandwidth,
-                                              h_trans_bandwidth=h_trans_bandwidth,
-                                              filter_length=filter_length,
-                                              method=filter_method,
-                                              picks=filter_picks,
-                                              n_jobs=n_jobs)
-        raw_filt_plot = raw_filt.plot_psd(fmax=65, n_jobs=n_jobs, average=False, spatial_colors=True, show=False)
-        self.report.add_figs_to_section(raw_filt_plot, captions='Raw data: Filtered', section='Preprocessing')
-        self.report.save(self.report_fname, overwrite=True, open_browser=False)
+        self.MNE_Raw_filt = self.MNE_Raw.copy().filter(l_freq=l_freq, h_freq=h_freq,
+                                                       l_trans_bandwidth=l_trans_bandwidth,
+                                                       h_trans_bandwidth=h_trans_bandwidth,
+                                                       filter_length=filter_length,
+                                                       method=filter_method,
+                                                       picks=filter_picks,
+                                                       n_jobs=n_jobs)
+
+        # Plot filtered Raw data
+        self.report.add_figs_to_section(
+            self.MNE_Raw_filt.plot_psd(fmax=80, n_jobs=n_jobs, average=False, spatial_colors=True,
+                                       show=False),
+            captions='Raw data: Filtered', section='Preprocessing'
+        )
 
         # Convert raw_ica to a series of 1s epochs
         events_ica = mne.make_fixed_length_events(raw_ica, duration=t_step)
@@ -179,9 +184,22 @@ class Subject:
                                     random_state=random_state)
         ica.fit(epochs_ica, reject=reject, tstep=t_step)
 
+        # Plot scalp maps of each independent component after fitting ICA
+        # test = ica.plot_components(picks=None, ch_type='eeg', show=False)
+        # self.report.add_figs_to_section(
+        #     ica.plot_components(picks=None, ch_type='eeg', show=False),
+        #     captions='ICA scalp maps'
+        # )
+        for i in ica.plot_components(picks=None, ch_type='eeg', show=False):
+            self.report.add_figs_to_section(
+                i,
+                captions='ICA scalp maps', comments='ICA component', section='Preprocessing'
+            )
+
         # Identify independent components associated with EOG artifacts
         ica.exclude = []
         eog_indices = None
+        eog_scores = None
 
         while num_excl < 2:
             eog_indices, eog_scores = ica.find_bads_eog(raw_ica, threshold=z_thresh)
@@ -191,9 +209,36 @@ class Subject:
         # Finally, ICA should have dropped ocular artifacts
         ica.exclude = eog_indices
 
+        # Visualize components selected and removed as EOG
+        self.report.add_figs_to_section(
+            ica.plot_scores(eog_scores, show=False),
+            captions='ICA component EOG match scores', section='Preprocessing'
+        )
+        for i in eog_indices:
+            self.report.add_figs_to_section(
+                ica.plot_properties(raw_ica, picks=i, psd_args={'fmax': h_freq}, show=False),
+                captions='Diagnostics', section='Preprocessing'
+            )
+
+        # Define EEG channels
+        self.picks_eeg = mne.pick_types(self.MNE_Raw_filt.info, eeg=True, eog=True, stim=False, exclude=[])
+
         # Segment filtered raw data into epochs
-        epochs = mne.Epochs(raw_filt, self.events, self.event_id, t_min, t_max,
-                            baseline=baseline, detrend=detrend, reject=None, flat=None, preload=True)
+        epochs = mne.Epochs(self.MNE_Raw_filt, self.events, self.event_id, t_min, t_max,
+                            baseline=baseline, detrend=detrend, reject=None, flat=None, preload=True,
+                            picks=self.picks_eeg)
+
+        # Plot epochs
+        self.report.add_figs_to_section(
+            epochs.plot(scalings=dict(eeg=.0005, eog=.0005), n_channels=66, picks=self.picks_eeg, show=False),
+            captions='Epochs', section='Preprocessing'
+        )
+
+        # Plot average of all epochs
+        self.report.add_figs_to_section(
+            epochs.average().plot(spatial_colors=True, show=False),
+            captions='Epochs average', section='Preprocessing'
+        )
 
         # Apply ICA correction
         epochs_postica = ica.apply(epochs.copy())
@@ -202,8 +247,36 @@ class Subject:
 
         # Apply AutoReject to epochs to clean up noise
         ar = AutoReject(n_jobs=n_jobs, random_state=random_state, verbose=False)
-        epochs_clean = ar.fit_transform(epochs_postica)
-        epochs_clean.set_eeg_reference(ref_channels=ref_channels)
+        self.epochs_clean = ar.fit_transform(epochs_postica)
+        self.epochs_clean.set_eeg_reference(ref_channels=ref_channels)
 
-        # Save cleaned epochs
-        epochs_clean.save(self.epochs_fname, overwrite=True)
+        # Plot average of all cleaned epochs
+        self.report.add_figs_to_section(
+            self.epochs_clean.average().plot(spatial_colors=True, show=False),
+            captions='Cleaned Epochs average', section='Preprocessing'
+        )
+
+        # Save cleaned epochs and report
+        self.epochs_clean.save(self.epochs_fname, overwrite=True)
+        self.report.save(self.report_fname, overwrite=True, open_browser=False)
+
+    def evoked(self):
+        # Create evoked responses (the average epochs for each condition) and save to file
+        self.evokeds = {cond: self.epochs_clean[cond].average() for cond in self.event_id.keys()}
+        mne.write_evokeds(self.evoked_fname, list(self.evokeds.values()))
+
+        # Plot averaged ERP and topoplots for each condition
+
+        # Compute between-condition differences
+        expt_contrasts = get_expt_contrasts()
+        self.diffs = {contr: mne.combine_evoked([self.evokeds[expt_contrasts[contr][0]],
+                                                 -self.evokeds[expt_contrasts[contr][1]]],
+                                                weights="equal")
+                      for contr in expt_contrasts}
+
+        # Plot each contrast, overlaid, at one electrode
+        pick = self.evokeds[list(self.evokeds.keys())[0]].ch_names.index('Cz')
+
+        # Plot topomaps of differences at 100ms intervals
+
+        # Plot butterfly plot of differences, with topomaps
