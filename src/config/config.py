@@ -25,10 +25,6 @@ def get_data_path():
     return PROJECT_ROOT.joinpath('nagl_dataset')
 
 
-def get_subject_lists_csv():
-    return PROJECT_ROOT.joinpath('nagl_dataset', 'sourcedata', 'subject_master.csv')
-
-
 def get_plots_path():
     return PROJECT_ROOT.joinpath('plots')
 

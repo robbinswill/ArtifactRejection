@@ -25,7 +25,7 @@ bids_root = get_data_path().joinpath('rawdata')
 sessions = ['list1', 'list2']
 
 # Read-in subjects and list parameters, creating a dictionary
-subject_lists_path = get_data_path().joinpath('sourcedata', 'subject_master.csv')
+subject_lists_path = NAGL_SOURCE.joinpath('subject_master.csv')
 subject_df = pd.read_csv(subject_lists_path)
 subject_list_params = subject_df.set_index('subject').T.to_dict()
 
