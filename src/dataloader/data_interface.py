@@ -6,8 +6,6 @@ to the .set EEG recordings
 
 from src.config.config import get_subject_lists_csv, get_data_path
 import pandas as pd
-from pathlib import Path
-import os
 
 
 def _load_subject_info():

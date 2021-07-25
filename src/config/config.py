@@ -14,16 +14,23 @@ dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
 
 
-def get_subject_lists_csv():
-    return Path.cwd().joinpath('nagl_dataset', 'sourcedata', 'subject_master.csv')
+PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT"))
 
 
-# Retrieve path to raw EEG data
-PATH_DATA = Path(os.getenv("PATH_DATA"))
+def get_project_root():
+    return PROJECT_ROOT
 
 
 def get_data_path():
-    return PATH_DATA
+    return PROJECT_ROOT.joinpath('nagl_dataset')
+
+
+def get_subject_lists_csv():
+    return PROJECT_ROOT.joinpath('nagl_dataset', 'sourcedata', 'subject_master.csv')
+
+
+def get_plots_path():
+    return PROJECT_ROOT.joinpath('plots')
 
 
 # Declare hyperparameters
@@ -51,7 +58,7 @@ __C.PARAMS.N_COMPONENTS = 0.975
 __C.PARAMS.BASELINE = (None, 0)
 __C.PARAMS.MONTAGE_FNAME = 'standard_1005'
 __C.PARAMS.METHOD = 'fft'
-__C.PARAMS.N_JOBS = 1
+__C.PARAMS.N_JOBS = -1
 __C.PARAMS.T_STEP = 1.0
 __C.PARAMS.NUM_EXCL = 0
 __C.PARAMS.Z_THRESHOLD = 3.0
@@ -66,6 +73,13 @@ __C.EXPERIMENT.CODES_A1L2 = [2, 1, 2, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2, 1, 2, 1, 
 __C.EXPERIMENT.CODES_A2L2 = [4, 3, 4, 3, 3, 4, 4, 4, 3, 3, 3, 4, 4, 4, 3, 4, 3, 4, 3, 3, 4, 3, 3, 4, 4, 3, 3, 3, 4, 3,
                              4, 3, 4, 4, 3, 3, 4, 4, 4, 3, 4, 3, 3, 3, 4, 4, 3, 3, 4, 3, 4, 4, 4, 4, 3, 3, 4, 3, 3, 4,
                              4, 4, 3, 4, 4, 3, 4, 3, 3, 4, 3, 4, 3, 4, 3, 3, 3, 4, 3, 4, 4, 4, 3, 3, 4, 3, 3, 4]
+
+
+def get_cfg_defaults():
+    """
+    Get a YACS CfgNode object with default values
+    """
+    return __C.clone()
 
 
 def get_channel_mapping():
@@ -103,10 +117,3 @@ def get_expt_contrasts():
 
 def get_cond_of_interest():
     return sorted(get_event_id().keys())
-
-
-def get_cfg_defaults():
-    """
-    Get a YACS CfgNode object with default values
-    """
-    return __C.clone()

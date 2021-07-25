@@ -1,6 +1,6 @@
-import sys
-
-sys.path.append('../src')
+"""
+Implement all Subject logic from the NAGL study
+"""
 from src.config.config import get_cfg_defaults, get_channel_mapping, get_event_id, get_expt_contrasts
 import mne
 from autoreject import Ransac, get_rejection_threshold, AutoReject
@@ -15,7 +15,7 @@ class Subject:
     """
 
     def __init__(self, name, paths):
-        self.report = mne.Report(verbose=True)
+        self.figures = {}
         self.evokeds = None
         self.diffs = None
         self.epochs_clean = None
@@ -142,13 +142,10 @@ class Subject:
                                              method=filter_method,
                                              picks=mne.pick_types(self.MNE_Raw.info, eeg=True, eog=True),
                                              n_jobs=n_jobs)
-
         # Plot frequency spectrum prior to filtering
-        self.report.add_figs_to_section(
-            self.MNE_Raw.plot_psd(fmax=80, n_jobs=n_jobs, average=False,
-                                  spatial_colors=True, show=False),
-            captions='Raw data: Unfiltered', section='Preprocessing'
-        )
+        self.figures['Raw frequency spectrum (Unfiltered)'] = self.MNE_Raw.plot_psd(fmax=80,
+                                                                                    average=False,
+                                                                                    spatial_colors=True, show=False)
 
         # Bandpass filter second copy of MNE_raw
         self.MNE_Raw_filt = self.MNE_Raw.copy().filter(l_freq=l_freq, h_freq=h_freq,
@@ -160,11 +157,10 @@ class Subject:
                                                        n_jobs=n_jobs)
 
         # Plot filtered Raw data
-        self.report.add_figs_to_section(
-            self.MNE_Raw_filt.plot_psd(fmax=80, n_jobs=n_jobs, average=False, spatial_colors=True,
-                                       show=False),
-            captions='Raw data: Filtered', section='Preprocessing'
-        )
+        self.figures['Raw frequency spectrum (Filtered)'] = self.MNE_Raw_filt.plot_psd(fmax=80,
+                                                                                       average=False,
+                                                                                       spatial_colors=True,
+                                                                                       show=False)
 
         # Convert raw_ica to a series of 1s epochs
         events_ica = mne.make_fixed_length_events(raw_ica, duration=t_step)
@@ -183,18 +179,13 @@ class Subject:
         ica = mne.preprocessing.ICA(n_components=n_components,
                                     random_state=random_state)
         ica.fit(epochs_ica, reject=reject, tstep=t_step)
+        del reject
 
-        # Plot scalp maps of each independent component after fitting ICA
-        # test = ica.plot_components(picks=None, ch_type='eeg', show=False)
-        # self.report.add_figs_to_section(
-        #     ica.plot_components(picks=None, ch_type='eeg', show=False),
-        #     captions='ICA scalp maps'
-        # )
-        for i in ica.plot_components(picks=None, ch_type='eeg', show=False):
-            self.report.add_figs_to_section(
-                i,
-                captions='ICA scalp maps', comments='ICA component', section='Preprocessing'
-            )
+        i = 1
+        for comp in ica.plot_components(picks=None, ch_type='eeg', show=False):
+            self.figures['ICA scalp maps ' + str(i)] = comp
+            i += 1
+        del i
 
         # Identify independent components associated with EOG artifacts
         ica.exclude = []
@@ -210,15 +201,10 @@ class Subject:
         ica.exclude = eog_indices
 
         # Visualize components selected and removed as EOG
-        self.report.add_figs_to_section(
-            ica.plot_scores(eog_scores, show=False),
-            captions='ICA component EOG match scores', section='Preprocessing'
-        )
+        self.figures['Independent component-EOG match scores'] = ica.plot_scores(eog_scores, show=False)
         for i in eog_indices:
-            self.report.add_figs_to_section(
-                ica.plot_properties(raw_ica, picks=i, psd_args={'fmax': h_freq}, show=False),
-                captions='Diagnostics', section='Preprocessing'
-            )
+            self.figures['Ocular artifacts'] = ica.plot_properties(raw_ica, picks=i, psd_args={'fmax': h_freq},
+                                                                   show=False)
 
         # Define EEG channels
         self.picks_eeg = mne.pick_types(self.MNE_Raw_filt.info, eeg=True, eog=True, stim=False, exclude=[])
@@ -228,17 +214,8 @@ class Subject:
                             baseline=baseline, detrend=detrend, reject=None, flat=None, preload=True,
                             picks=self.picks_eeg)
 
-        # Plot epochs
-        self.report.add_figs_to_section(
-            epochs.plot(scalings=dict(eeg=.0005, eog=.0005), n_channels=66, picks=self.picks_eeg, show=False),
-            captions='Epochs', section='Preprocessing'
-        )
-
         # Plot average of all epochs
-        self.report.add_figs_to_section(
-            epochs.average().plot(spatial_colors=True, show=False),
-            captions='Epochs average', section='Preprocessing'
-        )
+        self.figures['Epochs average'] = epochs.average().plot(spatial_colors=True, show=False)
 
         # Apply ICA correction
         epochs_postica = ica.apply(epochs.copy())
@@ -248,24 +225,34 @@ class Subject:
         # Apply AutoReject to epochs to clean up noise
         ar = AutoReject(n_jobs=n_jobs, random_state=random_state, verbose=False)
         self.epochs_clean = ar.fit_transform(epochs_postica)
+        # Re-run ICA?
         self.epochs_clean.set_eeg_reference(ref_channels=ref_channels)
 
         # Plot average of all cleaned epochs
-        self.report.add_figs_to_section(
-            self.epochs_clean.average().plot(spatial_colors=True, show=False),
-            captions='Cleaned Epochs average', section='Preprocessing'
-        )
+        self.figures['Cleaned Epochs average'] = self.epochs_clean.average().plot(spatial_colors=True, show=False)
 
         # Save cleaned epochs and report
         self.epochs_clean.save(self.epochs_fname, overwrite=True)
-        self.report.save(self.report_fname, overwrite=True, open_browser=False)
 
     def evoked(self):
+        # Retrieve parameters from configuration file
+        cfg_params = get_cfg_defaults()['PARAMS']
+        t_min = cfg_params['TMIN']
+        t_max = cfg_params['TMAX']
+
         # Create evoked responses (the average epochs for each condition) and save to file
         self.evokeds = {cond: self.epochs_clean[cond].average() for cond in self.event_id.keys()}
         mne.write_evokeds(self.evoked_fname, list(self.evokeds.values()))
 
         # Plot averaged ERP and topoplots for each condition
+        for cond in self.evokeds:
+            self.figures['Averaged ERP: ' + cond] = self.evokeds[cond].plot(spatial_colors=True, titles=cond, show=False)
+
+        # Topoplots for each condition
+        times = np.arange(t_min, t_max, 0.1)
+        for cond in self.evokeds:
+            self.figures['Topoplots by condition: ' + cond] = self.evokeds[cond].plot_topomap(outlines='head',
+                                                                            times=times, title=cond, show=False)
 
         # Compute between-condition differences
         expt_contrasts = get_expt_contrasts()
@@ -276,7 +263,16 @@ class Subject:
 
         # Plot each contrast, overlaid, at one electrode
         pick = self.evokeds[list(self.evokeds.keys())[0]].ch_names.index('Cz')
+        self.figures['Each contrast, overlaid at one electrode'] = mne.viz.plot_compare_evokeds(self.diffs, picks=pick,
+                                                                                                show=False)
 
         # Plot topomaps of differences at 100ms intervals
+        for contr in expt_contrasts:
+            self.figures['Topomaps of differences at 100ms intervals: ' + contr] = self.diffs[contr].plot_topomap(
+                outlines='head', times=times, title=contr, show=False)
 
         # Plot butterfly plot of differences, with topomaps
+        times = [0.200, 0.350, 0.600]
+        for contr in expt_contrasts:
+            self.figures['Butterfly plot of differences: ' + contr] = self.diffs[contr].plot_joint(times=times,
+                title=contr, ts_args=dict(gfp=True, hline=[0]), show=False)
