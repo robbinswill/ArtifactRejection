@@ -7,7 +7,7 @@ from pathlib import Path
 import mne.io
 import pandas as pd
 from dotenv import find_dotenv, load_dotenv
-from src.config.config import get_cfg_defaults, get_data_path
+from src.config.config import get_cfg_defaults, get_data_path, get_subject_lists_csv
 from mne_bids import write_raw_bids, BIDSPath
 import shutil
 
@@ -25,7 +25,7 @@ bids_root = get_data_path().joinpath('rawdata')
 sessions = ['list1', 'list2']
 
 # Read-in subjects and list parameters, creating a dictionary
-subject_lists_path = NAGL_SOURCE.joinpath('subject_master.csv')
+subject_lists_path = get_subject_lists_csv()
 subject_df = pd.read_csv(subject_lists_path)
 subject_list_params = subject_df.set_index('subject').T.to_dict()
 
@@ -52,7 +52,7 @@ for subject_id in subject_list_params.keys():
         # Get the sub-nagl###\ses-list# directory names to be used in the sourcedata directory
         subject_name_dir = bids_path.fpath.parent.parent.parent
         subject_list_dir = bids_path.fpath.parent.parent.stem
-        logs_dir = Path.cwd().parent.joinpath('sourcedata', subject_name_dir.stem, subject_list_dir)
+        logs_dir = get_data_path().joinpath('sourcedata', subject_name_dir.stem, subject_list_dir)
         logs_dst = logs_dir.joinpath(subject_id + '_' + subject_list.lower() + '.csv')
 
         # Get the path, including the name, of the file to be copied
@@ -66,5 +66,5 @@ for subject_id in subject_list_params.keys():
 
     # Copy nagl###_SPIN_answers.xlsx to sourcedata\sub-nagl###
     answers_src = NAGL_SOURCE.joinpath(subject_id, 'EEG', 'SPIN', subject_id + '_SPIN_answers.xlsx')
-    answers_dst = Path.cwd().parent.joinpath('sourcedata', subject_name_dir.stem, subject_id + '_SPIN_answers.xlsx')
+    answers_dst = get_data_path().joinpath('sourcedata', subject_name_dir.stem, subject_id + '_SPIN_answers.xlsx')
     shutil.copyfile(answers_src, answers_dst)

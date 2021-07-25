@@ -15,6 +15,7 @@ load_dotenv(dotenv_path)
 
 
 PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT"))
+NAGL_SOURCE = Path(os.getenv("NAGL_SOURCE"))
 
 
 def get_project_root():
@@ -23,6 +24,10 @@ def get_project_root():
 
 def get_data_path():
     return PROJECT_ROOT.joinpath('nagl_dataset')
+
+
+def get_subject_lists_csv():
+    return NAGL_SOURCE.joinpath('subject_master.csv')
 
 
 def get_plots_path():
