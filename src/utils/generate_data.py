@@ -1,5 +1,5 @@
 # Script to generate nagl_data in BIDS format from project source taken from the NCIL NAS
-# A required input is the subject_lists.csv in nagl_dataset\sourcedata
+# A required input is the subject_lists.csv in NAGL_SOURCE
 # This script is located in nagl_dataset\code\generate_data.py
 
 import os
