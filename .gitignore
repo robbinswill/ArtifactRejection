@@ -8,6 +8,9 @@
 # Subject data
 nagl_dataset/
 
+# Jupyter/IPython related things
+.ipynb_checkpoints/
+
 # DotEnv configuration
 .env
 
