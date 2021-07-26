@@ -32,7 +32,7 @@ dependencies:
 - nilearn
 - python-picard
 - pyqt!=5.15.3
-- mne
+- mne=0.22.1
 - mffpy>=0.5.7
 - ipywidgets
 - pip:
