@@ -25,6 +25,27 @@ class SubjectBatch:
             self.subject_batch[sub] = Subject(sub, paths)
         del self.subject_data
 
+    def test(self):
+        sub = self.subject_batch['nagl001']
+        print('Processing subject: ' + sub.name)
+        print('Reading raw files...')
+        sub.read_MNE_raw()
+        print('Processing events...')
+        sub.process_events()
+        print('Reading behavioural log...')
+        sub.read_behavioural_log()
+        print('Preprocessing...')
+        sub.preprocessing()
+        print('Creating evoked responses...')
+        sub.evoked()
+
+        # After preprocessing has finished for this subject, give their figures to SubjectReport
+        self.report.add_subject_figures(sub.name, sub.figures)
+        print('Preprocessing complete for: ' + sub.name)
+        # Generate report
+        print("Generating preprocessing report...")
+        self.report.generate_report()
+
     def execute_serial(self):
         for name, sub in self.subject_batch.items():
             self._preprocess_subject(sub)

@@ -8,7 +8,8 @@ def run():
     print('Executing main.py...')
     test = batch.SubjectBatch()
     test.generate_subjects()
-    test.execute_serial()
+    test.test()
+    # test.execute_serial()
     # test.execute_preprocessing()
     print('main.py finished')
 
