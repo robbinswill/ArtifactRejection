@@ -18,6 +18,7 @@ dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
 
 # Get the source directory and desired rawdata directory
+breakpoint()
 NAGL_SOURCE = Path(os.getenv("NAGL_SOURCE"))
 bids_root = get_data_path().joinpath('rawdata')
 
