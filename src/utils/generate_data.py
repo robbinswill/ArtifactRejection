@@ -18,7 +18,6 @@ dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
 
 # Get the source directory and desired rawdata directory
-breakpoint()
 NAGL_SOURCE = Path(os.getenv("NAGL_SOURCE"))
 bids_root = get_data_path().joinpath('rawdata')
 
@@ -26,13 +25,9 @@ bids_root = get_data_path().joinpath('rawdata')
 sessions = ['list1', 'list2']
 
 # Read-in subjects and list parameters, creating a dictionary
-breakpoint()
 subject_lists_path = get_subject_lists_csv()
-breakpoint()
 subject_df = pd.read_csv(subject_lists_path)
-breakpoint()
 subject_list_params = subject_df.set_index('subject').T.to_dict()
-breakpoint()
 
 # Begin creating BIDS
 bids_list = list()
@@ -45,10 +40,8 @@ for subject_id in subject_list_params.keys():
         # Get the list
         subject_list = subject_list_params[subject_id][session_list]
         # Get the path for this subject
-        breakpoint()
         raw_fname = NAGL_SOURCE.joinpath(subject_id, 'EEG', 'SPIN', subject_list,
                                          subject_id + '_SPIN_' + subject_list.lower() + '.set')
-        breakpoint()
         raw = mne.io.read_raw_eeglab(raw_fname.__str__(), cfg['PARAMS']['EOG_INDS'], preload=False)
         raw.set_montage(cfg['PARAMS']['MONTAGE_FNAME'])
         raw.info['line_freq'] = cfg['PARAMS']['LINE_FREQ']
