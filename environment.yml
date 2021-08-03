@@ -40,4 +40,8 @@ dependencies:
   - python-dotenv>=0.17.1
   - yacs>=0.1.8
   - autoreject>=0.2.2
+<<<<<<< HEAD
   - mne-bids==0.7
+=======
+  - mne-bids==0.7
+>>>>>>> 4c08f850ed46ee8ad6e9a567bb135eadb7f03134
