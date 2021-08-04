@@ -10,11 +10,11 @@ def run():
     # print('Generating BIDS...')
     # generate_data.generate_BIDS()
     print('Running preprocessing pipeline...')
-    test = batch.SubjectBatch()
-    test.generate_subjects()
-    test.test()
+    subjects = batch.SubjectBatch()
+    subjects.generate_subjects()
+    # subjects.test()
     # test.execute_serial()
-    test.execute_preprocessing()
+    subjects.execute_parallel()
     print('main.py finished')
 
 

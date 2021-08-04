@@ -4,7 +4,6 @@ Batch script that generates subjects and executes preprocessing
 from src.dataloader.data_interface import DataInterface
 from src.models.subject import Subject
 from src.utils.subject_report import SubjectReport
-import concurrent.futures
 import multiprocessing
 
 
@@ -55,11 +54,10 @@ class SubjectBatch:
         self.report.generate_report()
 
     def execute_parallel(self):
+        # Requires n_jobs = 1
         # Multiprocessing test
-        with multiprocessing.Pool() as executor:
-            executor.map_async(self._preprocess_subject, self.subject_batch.values(), chunksize=1)
-            executor.close()
-            executor.join()
+        with multiprocessing.Pool() as pool:
+            pool.map(self._preprocess_subject, self.subject_batch.values(), chunksize=1)
             # After preprocessing all subjects generate the report
             self.report.generate_report()
 
