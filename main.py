@@ -7,14 +7,14 @@ from src.utils import generate_data
 
 def run():
     print('Executing main.py...')
-    print('Generating BIDS...')
-    generate_data.generate_BIDS()
+    # print('Generating BIDS...')
+    # generate_data.generate_BIDS()
     print('Running preprocessing pipeline...')
-    # test = batch.SubjectBatch()
-    # test.generate_subjects()
-    # test.test()
+    test = batch.SubjectBatch()
+    test.generate_subjects()
+    test.test()
     # test.execute_serial()
-    # test.execute_preprocessing()
+    test.execute_preprocessing()
     print('main.py finished')
 
 

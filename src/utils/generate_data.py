@@ -41,12 +41,15 @@ def generate_BIDS():
         for session_list in sessions:
             # Get the list
             subject_list = subject_list_params[subject_id][session_list]
+
             # Get the path for this subject
             raw_fname = NAGL_SOURCE.joinpath(subject_id, 'EEG', 'SPIN', subject_list,
                                              subject_id + '_SPIN_' + subject_list.lower() + '.set')
             raw = mne.io.read_raw_eeglab(raw_fname.__str__(), cfg['PARAMS']['EOG_INDS'], preload=False)
             raw.set_montage(cfg['PARAMS']['MONTAGE_FNAME'])
             raw.info['line_freq'] = cfg['PARAMS']['LINE_FREQ']
+
+            # Generate BIDS path a write files to nagl_dataset
             bids_path = BIDSPath(subject=subject_id, session=session_list, root=bids_root)
             bids_list.append(bids_path)
             write_raw_bids(raw, bids_path, overwrite=True)
