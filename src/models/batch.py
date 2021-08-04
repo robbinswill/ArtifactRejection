@@ -57,7 +57,7 @@ class SubjectBatch:
         # Requires n_jobs = 1
         # Multiprocessing test
         with multiprocessing.Pool() as pool:
-            pool.map(self._preprocess_subject, self.subject_batch.values(), chunksize=1)
+            pool.map(self._preprocess_subject, self.subject_batch.values())
             # After preprocessing all subjects generate the report
             self.report.generate_report()
 
