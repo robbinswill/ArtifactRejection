@@ -57,7 +57,7 @@ class SubjectBatch:
         # Requires n_jobs = 1
         # Multiprocessing test
         with multiprocessing.Pool() as pool:
-            pool.imap(self._preprocess_subject, self.subject_batch.values())
+            pool.imap(func=self._preprocess_subject, iterable=self.subject_batch.values())
             pool.close()
             pool.join()
             # After preprocessing all subjects generate the report
