@@ -87,19 +87,24 @@ class Subject:
         acc_data = acc_data.dropna()
         self.acc_data = acc_data.rename(columns={0: 'word', 1: 'correct'})
 
-        # Modify codes for error trials
+        # Modify codes for error trial
         # Find codes for target words
         target_codes_idx = np.where(self.events[:, 2] < 5)
-        events_target = self.events[target_codes_idx, 2]
+        target_events = self.events[target_codes_idx, 2]
+
         # Find indices of error trials
         err_indices = np.where(self.acc_data['correct'] == 0)[0]
+
         # Replaces codes for error trials with a code that doubles its numeral
-        events_target[0][err_indices] = events_target[0][err_indices] * 10 + events_target[0][err_indices]
+        target_events[0][err_indices] = target_events[0][err_indices] * 10 + target_events[0][err_indices]
+
         # Exclude first 8 practice trials
-        events_target[0][:8] = events_target[0][:8] * 100
-        events_target[0][88:88 + 8] = events_target[0][88:88 + 8] * 100
+        target_events[0][:8] = target_events[0][:8] * 100
+        target_events[0][88:88 + 8] = target_events[0][88:88 + 8] * 100
+
         # Merge modified codes into events structure
-        self.events[target_codes_idx, 2] = events_target
+        self.events[target_codes_idx, 2] = target_events
+
         # Remove absent codes from event_id dict
         self.event_id = get_event_id()
         actual_codes = [i for i in list(self.event_id.values()) if i in np.unique(self.events[:, 2])]
