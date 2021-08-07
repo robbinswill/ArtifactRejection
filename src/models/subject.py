@@ -54,12 +54,12 @@ class Subject:
         eog_inds = cfg['PARAMS']['EOG_INDS']
         raw_files = [mne.io.read_raw_eeglab(f, eog=eog_inds, preload=False)
                      for f in self.raw_paths]
-        self.MNE_Raw = mne.concatenate_raws(raw_files, preload=True)
+        for file in raw_files:
+            if file.ch_names[1] == 'Fpz':
+                channel_mapping = get_channel_mapping()
+                mne.rename_channels(file.info, channel_mapping)
 
-        # Check for incorrect channels
-        if self.MNE_Raw.ch_names[1] == 'Fpz':
-            channel_mapping = get_channel_mapping()
-            mne.rename_channels(self.MNE_Raw.info, channel_mapping)
+        self.MNE_Raw = mne.concatenate_raws(raw_files, preload=True)
 
         # Set the montage
         self.MNE_Raw.set_montage(cfg['PARAMS']['MONTAGE_FNAME'])

@@ -25,7 +25,7 @@ class SubjectBatch:
         del self.subject_data
 
     def test(self):
-        sub = self.subject_batch['nagl043']
+        sub = self.subject_batch['nagl009']
         print('Processing subject: ' + sub.name)
         print('Reading raw files...')
         sub.read_MNE_raw()
