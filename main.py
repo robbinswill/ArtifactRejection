@@ -14,8 +14,8 @@ def run():
     subjects = batch.SubjectBatch()
     subjects.generate_subjects()
     # subjects.test()
-    # subjects.execute_serial()
-    subjects.execute_parallel()
+    subjects.execute_serial()
+    # subjects.execute_parallel()
     print('main.py finished')
 
 
